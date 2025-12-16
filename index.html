@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Date Site Player</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
+
+      body {
+        overflow: hidden;
+        background-color: #E6E6FA;
+        color: #DF73FF;
+      }
+
+      #content-frame {
+        width: 100%;
+        height: 100%;
+        border: none;
+      }
+
+      /* Hide audio elements in iframe */
+      #content-frame audio {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
+      }
+
+      .mute-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: #E6D9FF;
+        border: 2px solid #DF73FF;
+        color: #DF73FF;
+        font-size: 24px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.3s;
+        z-index: 9999;
+        pointer-events: auto;
+      }
+
+      .mute-button:hover {
+        background-color: #DF73FF;
+        color: #E6D9FF;
+        border: 2px solid #DF73FF;
+        transform: scale(1.1);
+      }
+    </style>
+    <script>
+      let iframe, globalAudio;
+
+      function toggleMute() {
+        const muteBtn = document.getElementById("mute-btn");
+
+        if (!globalAudio || !muteBtn) return;
+
+        if (globalAudio.muted) {
+          globalAudio.muted = false;
+          muteBtn.textContent = "🔊";
+          localStorage.setItem("musicMuted", "false");
+        } else {
+          globalAudio.muted = true;
+          muteBtn.textContent = "🔇";
+          localStorage.setItem("musicMuted", "true");
+        }
+      }
+
+      // Remove audio elements from pages loaded in iframe
+      function removeAudioFromIframe() {
+        if (!iframe) return;
+        try {
+          const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+          const audioElements = iframeDoc.querySelectorAll("audio");
+          const muteButtons = iframeDoc.querySelectorAll(".mute-button");
+          
+          audioElements.forEach(audio => {
+            audio.pause();
+            audio.remove();
+          });
+          muteButtons.forEach(btn => btn.remove());
+        } catch (e) {
+          // Cross-origin or not ready yet
+        }
+      }
+
+      // Intercept navigation in iframe
+      function setupIframeNavigation() {
+        if (!iframe) return;
+        
+        iframe.addEventListener("load", function() {
+          setTimeout(function() {
+            removeAudioFromIframe();
+            interceptNavigation();
+          }, 200);
+        });
+      }
+
+      function interceptNavigation() {
+        if (!iframe) return;
+        try {
+          const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+          const iframeWindow = iframe.contentWindow;
+          
+          // Override location object in iframe to prevent navigation
+          try {
+            const currentSrc = iframe.src;
+            Object.defineProperty(iframeWindow, 'location', {
+              get: function() {
+                return {
+                  href: currentSrc,
+                  assign: function(url) {
+                    iframe.src = url;
+                  },
+                  replace: function(url) {
+                    iframe.src = url;
+                  },
+                  reload: function() {
+                    iframe.src = iframe.src;
+                  }
+                };
+              },
+              set: function(url) {
+                iframe.src = url;
+              }
+            });
+          } catch (e) {
+            // May not work in all browsers
+          }
+          
+          // Intercept ALL button clicks
+          const buttons = iframeDoc.querySelectorAll("button");
+          buttons.forEach(button => {
+            const onclick = button.getAttribute("onclick");
+            if (onclick && onclick.includes("location.href")) {
+              button.removeAttribute("onclick");
+              button.addEventListener("click", function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                const match = onclick.match(/location\.href\s*=\s*['"]([^'"]+)['"]/);
+                if (match && match[1]) {
+                  iframe.src = match[1];
+                }
+                return false;
+              }, true);
+            }
+            
+            // Also intercept buttons with formaction
+            const formaction = button.getAttribute("formaction");
+            if (formaction && button.type === "submit") {
+              button.addEventListener("click", function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                iframe.src = formaction;
+                return false;
+              }, true);
+            }
+          });
+          
+          // Intercept form submissions with formaction
+          const forms = iframeDoc.querySelectorAll("form");
+          forms.forEach(form => {
+            form.addEventListener("submit", function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+              e.stopImmediatePropagation();
+              const submitBtn = form.querySelector("button[type='submit'][formaction]");
+              if (submitBtn) {
+                const formaction = submitBtn.getAttribute("formaction");
+                if (formaction) {
+                  iframe.src = formaction;
+                }
+              }
+              return false;
+            }, true);
+          });
+          
+          // Intercept anchor links
+          const links = iframeDoc.querySelectorAll("a[href]");
+          links.forEach(link => {
+            link.addEventListener("click", function(e) {
+              const href = this.getAttribute("href");
+              if (href && !href.startsWith("#") && !href.startsWith("javascript:") && !href.startsWith("mailto:") && !href.startsWith("tel:")) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                iframe.src = href;
+                return false;
+              }
+            }, true);
+          });
+          
+          // Use capture phase to catch events early
+          iframeDoc.addEventListener("click", function(e) {
+            const target = e.target;
+            if (target.tagName === "BUTTON" || target.tagName === "A") {
+              const onclick = target.getAttribute("onclick");
+              if (onclick && onclick.includes("location.href")) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                const match = onclick.match(/location\.href\s*=\s*['"]([^'"]+)['"]/);
+                if (match && match[1]) {
+                  iframe.src = match[1];
+                }
+                return false;
+              }
+            }
+          }, true);
+        } catch (e) {
+          console.log("Navigation interception error:", e);
+        }
+      }
+
+      window.addEventListener("DOMContentLoaded", function() {
+        iframe = document.getElementById("content-frame");
+        globalAudio = document.getElementById("global-music");
+        
+        if (globalAudio) {
+          globalAudio.volume = 0.2; // Set volume to 20%
+          
+          // Restore mute state
+          const muted = localStorage.getItem("musicMuted") === "true";
+          globalAudio.muted = muted;
+          const muteBtn = document.getElementById("mute-btn");
+          if (muteBtn) {
+            muteBtn.textContent = muted ? "🔇" : "🔊";
+          }
+          
+          // Try to play immediately
+          globalAudio.play().catch(function(error) {
+            console.log("Autoplay prevented, will try on user interaction:", error);
+          });
+        }
+        
+        setupIframeNavigation();
+        setTimeout(removeAudioFromIframe, 500);
+      });
+      
+      window.addEventListener("load", function() {
+        if (globalAudio) {
+          globalAudio.volume = 0.2; // Set volume to 20%
+          // Try to play again on load in case autoplay was blocked
+          if (globalAudio.paused) {
+            globalAudio.play().catch(function(error) {
+              console.log("Autoplay prevented:", error);
+            });
+          }
+        }
+      });
+      
+      // Fallback: try to play on user interaction if autoplay was blocked
+      document.addEventListener("click", function() {
+        if (globalAudio && globalAudio.paused) {
+          globalAudio.play().catch(function(error) {
+            console.log("Play failed:", error);
+          });
+        }
+      });
+      document.addEventListener("touchstart", function() {
+        if (globalAudio && globalAudio.paused) {
+          globalAudio.play().catch(function(error) {
+            console.log("Play failed:", error);
+          });
+        }
+      });
+      document.addEventListener("keydown", function() {
+        if (globalAudio && globalAudio.paused) {
+          globalAudio.play().catch(function(error) {
+            console.log("Play failed:", error);
+          });
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <audio id="global-music" autoplay loop>
+      <source src="Halintulad.mp3" type="audio/mpeg" />
+      Your browser does not support the audio element.
+    </audio>
+
+    <button id="mute-btn" class="mute-button" onclick="toggleMute()">🔊</button>
+
+    <!-- All your existing pages load inside this frame -->
+    <iframe id="content-frame" src="question.html"></iframe>
+  </body>
+</html>

@@ -1,0 +1,69 @@
+body {
+  text-align: center;
+  margin: 0;
+  padding: 30px 20px 80px 20px;
+  font-family: "Courier";
+  background-color: #E6E6FA;
+  color: #DF73FF;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+#thankyou {
+  font-size: 50px;
+  margin-bottom: 20px;
+}
+.rizz {
+  margin-bottom: 10 px;
+}
+.button {
+  padding: 10px 20px;
+  font-size: 18px;
+  cursor: pointer;
+  margin: 10px;
+  font-family: "courier";
+  margin-bottom: 20px;
+  background-color: #E6D9FF;
+  color: #B794F6;
+  border-radius: 12px;
+  border: 2px solid #E6D9FF;
+  box-shadow: 1px 1px 2px #DF73FF;
+  transition: 0.3s;
+}
+
+.button:hover {
+  background-color: #DF73FF;
+  color: #E6D9FF;
+  border: 2px solid #DF73FF;
+  box-shadow: 1px 1px 2px #E6D9FF;
+}
+
+.mute-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #E6D9FF;
+  border: 2px solid #DF73FF;
+  color: #B794F6;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.3s;
+  z-index: 9999;
+  pointer-events: auto;
+}
+
+.mute-button:hover {
+  background-color: #DF73FF;
+  color: #E6D9FF;
+  border: 2px solid #DF73FF;
+  transform: scale(1.1);
+}

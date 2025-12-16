@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Special Message</title>
+    <link rel="stylesheet" href="css/lastpage.css" />
+    <link rel="stylesheet" href="css/flower.css" />
+    <script>
+      function toggleMute() {
+        const audio = document.getElementById("background-music");
+        const muteBtn = document.getElementById("mute-btn");
+        
+        if (audio.muted) {
+          audio.muted = false;
+          muteBtn.textContent = "🔊";
+          localStorage.setItem("musicMuted", "false");
+        } else {
+          audio.muted = true;
+          muteBtn.textContent = "🔇";
+          localStorage.setItem("musicMuted", "true");
+        }
+      }
+
+      // Save playback state before leaving page
+      function savePlaybackState() {
+        const audio = document.getElementById("background-music");
+        if (audio) {
+          localStorage.setItem("musicCurrentTime", audio.currentTime);
+          localStorage.setItem("musicPlaying", !audio.paused);
+        }
+      }
+
+      // Restore playback state on page load
+      function restorePlaybackState() {
+        const audio = document.getElementById("background-music");
+        if (!audio) return;
+
+        // Set volume to 20%
+        audio.volume = 0.2;
+
+        // Restore mute state
+        const muted = localStorage.getItem("musicMuted") === "true";
+        audio.muted = muted;
+        const muteBtn = document.getElementById("mute-btn");
+        if (muteBtn) {
+          muteBtn.textContent = muted ? "🔇" : "🔊";
+        }
+
+        // Restore playback time and state
+        const savedTime = parseFloat(localStorage.getItem("musicCurrentTime")) || 0;
+        const wasPlaying = localStorage.getItem("musicPlaying") === "true";
+
+        audio.currentTime = savedTime;
+
+        if (wasPlaying && audio.paused) {
+          audio.play().catch(function(error) {
+            console.log("Autoplay prevented:", error);
+          });
+        }
+      }
+
+      // Try to play audio when page loads and on any user interaction
+      function tryPlayAudio() {
+        const audio = document.getElementById("background-music");
+        if (audio && audio.paused) {
+          audio.play().catch(function(error) {
+            console.log("Autoplay prevented:", error);
+          });
+          localStorage.setItem("musicPlaying", "true");
+        }
+      }
+
+      // Update playback time periodically
+      setInterval(function() {
+        const audio = document.getElementById("background-music");
+        if (audio && !audio.paused) {
+          localStorage.setItem("musicCurrentTime", audio.currentTime);
+          localStorage.setItem("musicPlaying", "true");
+        }
+      }, 500);
+
+      window.addEventListener("load", function() {
+        const audio = document.getElementById("background-music");
+        if (audio) {
+          audio.volume = 0.2; // Set volume to 20%
+        }
+        restorePlaybackState();
+        tryPlayAudio();
+      });
+      
+      // Save state before page unload
+      window.addEventListener("beforeunload", savePlaybackState);
+      
+      // Try to play on user interaction
+      document.addEventListener("click", tryPlayAudio);
+      document.addEventListener("touchstart", tryPlayAudio);
+      document.addEventListener("keydown", tryPlayAudio);
+    </script>
+    <style>
+      body {
+        margin: 0;
+        padding: 30px 20px 80px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        min-height: 100vh;
+        box-sizing: border-box;
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+
+      .message-container {
+        max-width: 800px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 40px;
+        text-align: center;
+        border: 3px solid #DF73FF;
+        border-radius: 20px;
+        background-color: #E6E6FA;
+        box-shadow: 0 4px 8px rgba(223, 115, 255, 0.3);
+        box-sizing: border-box;
+      }
+
+      .message-text {
+        font-size: 20px;
+        line-height: 1.8;
+        color: #DF73FF;
+        margin: 30px 0;
+        font-family: "Courier", monospace;
+        padding: 20px;
+        border: 2px dashed #E6D9FF;
+        border-radius: 15px;
+        background-color: rgba(230, 217, 255, 0.2);
+        text-align: justify;
+      }
+
+      .message-text p {
+        margin: 20px 0;
+        text-align: justify;
+      }
+
+      .mute-button {
+        z-index: 9999;
+        pointer-events: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <audio id="background-music" autoplay loop>
+      <source src="Halintulad.mp3" type="audio/mpeg" />
+      Your browser does not support the audio element.
+    </audio>
+
+    <button id="mute-btn" class="mute-button" onclick="toggleMute()">🔊</button>
+
+    <div class="message-container">
+      <img src="nailong2.png" alt="nailong" style="max-width: 100%; height: auto; margin-bottom: 20px;" />
+      
+      <div class="message-text">
+        <p>
+            Thank you in advance for saying yes to this date. I really appreciate it and I’m genuinely looking forward to spending time with you. I’ll pick you up around 9–10 AM, then we’ll go to Tagaytay. We’ll grab either breakfast or lunch there, enjoy the view, and just walk around and talk. Chill lang, no rush.
+        <p>
+          With all my love ❤️
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
+

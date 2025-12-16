@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="css/lastpage.css" />
+    <link rel="stylesheet" href="css/flower.css" />
+    <script>
+      function toggleMute() {
+        const audio = document.getElementById("background-music");
+        const muteBtn = document.getElementById("mute-btn");
+        
+        if (audio.muted) {
+          audio.muted = false;
+          muteBtn.textContent = "🔊";
+          localStorage.setItem("musicMuted", "false");
+        } else {
+          audio.muted = true;
+          muteBtn.textContent = "🔇";
+          localStorage.setItem("musicMuted", "true");
+        }
+      }
+
+      // Save playback state before leaving page
+      function savePlaybackState() {
+        const audio = document.getElementById("background-music");
+        if (audio) {
+          localStorage.setItem("musicCurrentTime", audio.currentTime);
+          localStorage.setItem("musicPlaying", !audio.paused);
+        }
+      }
+
+      // Restore playback state on page load
+      function restorePlaybackState() {
+        const audio = document.getElementById("background-music");
+        if (!audio) return;
+
+        // Restore mute state
+        const muted = localStorage.getItem("musicMuted") === "true";
+        audio.muted = muted;
+        const muteBtn = document.getElementById("mute-btn");
+        if (muteBtn) {
+          muteBtn.textContent = muted ? "🔇" : "🔊";
+        }
+
+        // Restore playback time and state
+        const savedTime = parseFloat(localStorage.getItem("musicCurrentTime")) || 0;
+        const wasPlaying = localStorage.getItem("musicPlaying") === "true";
+
+        audio.currentTime = savedTime;
+
+        if (wasPlaying && audio.paused) {
+          audio.play().catch(function(error) {
+            console.log("Autoplay prevented:", error);
+          });
+        }
+      }
+
+      // Try to play audio when page loads and on any user interaction
+      function tryPlayAudio() {
+        const audio = document.getElementById("background-music");
+        if (audio && audio.paused) {
+          audio.play().catch(function(error) {
+            console.log("Autoplay prevented:", error);
+          });
+          localStorage.setItem("musicPlaying", "true");
+        }
+      }
+
+      // Update playback time periodically
+      setInterval(function() {
+        const audio = document.getElementById("background-music");
+        if (audio && !audio.paused) {
+          localStorage.setItem("musicCurrentTime", audio.currentTime);
+          localStorage.setItem("musicPlaying", "true");
+        }
+      }, 500);
+
+      window.addEventListener("load", function() {
+        const audio = document.getElementById("background-music");
+        if (audio) {
+          audio.volume = 0.2; // Set volume to 20%
+        }
+        restorePlaybackState();
+        tryPlayAudio();
+      });
+      
+      // Save state before page unload
+      window.addEventListener("beforeunload", savePlaybackState);
+      
+      // Try to play on user interaction
+      document.addEventListener("click", tryPlayAudio);
+      document.addEventListener("touchstart", tryPlayAudio);
+      document.addEventListener("keydown", tryPlayAudio);
+    </script>
+  </head>
+  <body>
+    <audio id="background-music" autoplay loop volume="0.2">
+      <source src="Halintulad.mp3" type="audio/mpeg" />
+      Your browser does not support the audio element.
+    </audio>
+
+    <button id="mute-btn" class="mute-button" onclick="toggleMute()">🔊</button>
+    <div id="thankyou"><b>Thank you for being my girlfriend</b></div>
+    <div class="flower">
+      <div class="f-wrapper">
+        <div class="flower__line"></div>
+        <div class="f">
+          <div class="flower__leaf flower__leaf--1"></div>
+          <div class="flower__leaf flower__leaf--2"></div>
+          <div class="flower__leaf flower__leaf--3"></div>
+          <div class="flower__leaf flower__leaf--4"></div>
+          <div class="flower__leaf flower__leaf--5"></div>
+          <div class="flower__leaf flower__leaf--6"></div>
+          <div class="flower__leaf flower__leaf--7"></div>
+          <div
+            class="flower__leaf flower__leaf--8 flower__fall-down--yellow"
+          ></div>
+        </div>
+      </div>
+
+      <div class="f-wrapper f-wrapper--2">
+        <div class="flower__line"></div>
+        <div class="f">
+          <div class="flower__leaf flower__leaf--1"></div>
+          <div class="flower__leaf flower__leaf--2"></div>
+          <div class="flower__leaf flower__leaf--3"></div>
+          <div class="flower__leaf flower__leaf--4"></div>
+          <div class="flower__leaf flower__leaf--5"></div>
+          <div class="flower__leaf flower__leaf--6"></div>
+          <div class="flower__leaf flower__leaf--7"></div>
+          <div
+            class="flower__leaf flower__leaf--8 flower__fall-down--pink"
+          ></div>
+        </div>
+      </div>
+
+      <div class="f-wrapper f-wrapper--3">
+        <div class="flower__line"></div>
+        <div class="f">
+          <div class="flower__leaf flower__leaf--1"></div>
+          <div class="flower__leaf flower__leaf--2"></div>
+          <div class="flower__leaf flower__leaf--3"></div>
+          <div class="flower__leaf flower__leaf--4"></div>
+          <div class="flower__leaf flower__leaf--5"></div>
+          <div class="flower__leaf flower__leaf--6"></div>
+          <div class="flower__leaf flower__leaf--7"></div>
+          <div
+            class="flower__leaf flower__leaf--8 flower__fall-down--purple"
+          ></div>
+        </div>
+      </div>
+      <div class="flower__glass"></div>
+    </div>
+  </body>
+</html>
+
